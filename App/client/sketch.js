@@ -1,7 +1,8 @@
 const MessageType = {
     greet: 0, 
     update:1, 
-    clear: 2
+    clear: 2,
+    chat: 3
 }
 const ellipseCordinates = [];
 
@@ -23,6 +24,41 @@ const colorPicker = document.createElement("input");
 const IPAddr = document.createElement("input");
 const connectButton = document.createElement("button");
 const shapeSelect = document.createElement("select");
+
+const chatfeed = document.createElement("div");
+
+const chatboxDiv = document.createElement("div");
+const chatbox = document.createElement("input");
+chatbox.type = "text";
+chatbox.name = "chatbox";
+const sendChat = document.createElement("input");
+sendChat.type = "button";
+sendChat.for = "chatbox";
+sendChat.value = "Send";
+
+sendChat.addEventListener("click", () => {
+    const message = {type: MessageType.chat, message: chatbox.value};
+    // Check message
+    if(message.message == "") return;
+    // Send message
+    ws.send(JSON.stringify(message));
+    chatbox.value = "";
+}); 
+
+chatbox.addEventListener("keydown", (e) => {
+    // Check for enter to send message
+    if(e.key != "Enter") return 
+    const message = {type: MessageType.chat, message: chatbox.value};
+    // Check for a message
+    if(message.message == "") return;
+    // Send message
+    ws.send(JSON.stringify(message));
+    chatbox.value = "";
+});
+
+chatboxDiv.append(chatfeed);
+chatboxDiv.append(chatbox);
+chatboxDiv.append(sendChat);
 
 const sizeSlider = document.createElement("input");
 sizeSlider.type = "range";
@@ -62,6 +98,11 @@ connectButton.addEventListener("click", (e) => {
                 break;
             case MessageType.clear: 
                 ellipseCordinates.splice(0, ellipseCordinates.length);
+                break;
+            case MessageType.chat:
+                let chatTextEl = document.createElement("p");
+                chatTextEl.textContent = message.message; 
+                chatfeed.append(chatTextEl);
                 break;
         }
     });
@@ -123,6 +164,7 @@ uiDiv.append(shapeSelect);
 uiDiv.append(sizeSlider);
 
 document.body.append(uiDiv);
+document.body.append(chatboxDiv);
 
 function setup() {
     createCanvas(800, 800);
@@ -154,7 +196,7 @@ function draw() {
 function mouseDragged() {
     if(!connected) return;
 
-    let newPos = {x: mouseX, y: mouseY, col: colorPicker.value, shape:0}
+    let newPos = {x: Number(mouseX), y: Number(mouseY), col: colorPicker.value, shape:0}
     switch(selectedShape) {
         case shapes.circle:
             newPos.shape = 0;
